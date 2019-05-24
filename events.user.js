@@ -11,17 +11,23 @@
 
 'use strict';
 
-const stripesGradient = (colors, width, angle) => {
-  let gradient = `repeating-linear-gradient( ${angle}deg,`;
-  let pos = 0;
+const formatPercent = (percent)  => {
+  return (percent * 100).toString() + "%"
+}
+
+const stripesGradient = (colors, angle) => {
+  let gradient = `linear-gradient( 90deg,`;
+
+  let percentIncrement = (1 / colors.length)
+  let currentPercent = 0
 
   colors.forEach(color => {
-    gradient += color + " " + pos + "px,";
-    pos += width;
-    gradient += color + " " + pos + "px,";
+    currentPercent = currentPercent + percentIncrement
+    gradient += " " + color + " " + formatPercent(currentPercent - percentIncrement) + " " + formatPercent(currentPercent) + ","
   });
   gradient = gradient.slice(0, -1);
   gradient += ")";
+
   return gradient;
 };
 
@@ -33,6 +39,10 @@ const calculatePosition = (event, parentPosition) => {
     left: Math.max(eventPosition.left - parentPosition.left, 0),
     right: parentPosition.right - eventPosition.right,
   }
+}
+
+const convertText = (cssText) => {
+  return cssText
 }
 
 const mergeEventElements = (events) => {
@@ -65,7 +75,7 @@ const mergeEventElements = (events) => {
       width: eventToKeep.style.width,
       border: eventToKeep.style.border,
     };
-    eventToKeep.style.backgroundImage = stripesGradient(colors, 10, 45);
+    eventToKeep.style.backgroundImage = stripesGradient(colors);
     eventToKeep.style.backgroundSize = "initial";
     eventToKeep.style.left = Math.min.apply(Math, positions.map(s => s.left)) + 'px';
     eventToKeep.style.right = Math.min.apply(Math, positions.map(s => s.right)) + 'px';
@@ -73,13 +83,22 @@ const mergeEventElements = (events) => {
     eventToKeep.style.width = null;
     eventToKeep.style.border = "solid 1px #FFF"
 
+    let textElement = eventToKeep.querySelector('[aria-hidden="true"]')
+    if (textElement) {
+      for (var i = 0; i < textElement.children.length; i++) {
+        let child = textElement.children[i]
+        child.style.color = "white"
+        child.style["text-shadow"] = "1px 1px 1px black"
+      }
+    }
+
     events.forEach(event => {
       event.style.visibility = "hidden";
     });
   } else {
     const dots = eventToKeep.querySelector('[role="button"] div:first-child');
     const dot = dots.querySelector('div');
-    dot.style.backgroundImage = stripesGradient(colors, 4, 90);
+    dot.style.backgroundImage = stripesGradient(colors);
     dot.style.width = colors.length * 4 + 'px';
     dot.style.borderWidth = 0;
     dot.style.height = '8px';
